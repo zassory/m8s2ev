@@ -1,63 +1,85 @@
 const express = require('express');
 const { response , request } = require('express');
+const bodyParser = require("body-parser");
 
 const listaJugadores = require('./data/jugadores');
+let listaLibros = require('./data/data');
 
 const PORT = 3000;
 
 const app = express();
 
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/api/jugadores', (req,res) => {
-    res.send(listaJugadores);
-});
+const models = require("./models");
+const routes = require("./routes");
 
-app.get('/api/jugadores/:id', (req,res) => {
-    let { id } = req.params;    
-    id = parseInt(id);
-    try{                
-        let jugador = listaJugadores.find(jugador => jugador.id === id);        
-        
-        if(!jugador) return res.status(400).json({message:"Jugador no encontrado",err});
-        
+app.get('/api/libros', (req = request , res = response) => {
+    try{        
         return res.status(200).json({
-            data: jugador
-        });                   
-    } catch(err){
-        res.status(400).json({
-            message: "No encontrado",
-            err
+            listaLibros,
+            success: true
         });
-    } finally{
-        console.log('Consulta terminada');
+    }catch(err){
+        return res.status(500).json(
+            { 
+                message: 'Error en el servidor, hable con el administrador',
+                success: false 
+            });
     }
 });
 
-app.post('/api/jugadores',(req = request,res = response) => {
-    
-    const jugadorNuevo = req.body;    
-    
-    const existeNombre = listaJugadores.find(jugador => jugador.nombre === jugadorNuevo.nombre);
-    
+app.post('/api/libros', (req = request, res = response) => {        
     try{
-        if(existeNombre){
-             res.status(409).json({ mensaje : 'Ya existe un elemento con ese nombre'});
-             return;
+        const libroNuevo = req.body;
+        
+        listaLibros.push(libroNuevo);
+                            
+        res.status(201).json(libroNuevo);
+
+    }catch(err){
+        res.status(201).json({ message: "Error en el servidor" });
+    }
+});
+
+app.delete('/api/libros/:id', (req = request , res = response) => {
+    try{        
+        const idEliminar = req.params.id;
+
+        const listaActualizada = listaLibros.filter(libro => libro.isbn !== idEliminar);
+        
+        listaLibros = listaActualizada;
+        
+        res.status(201).json(listaLibros);
+        //res.status(204).json({ message: "Libro eliminado correctamente" });
+    }catch(err){
+        return res.status(500).json({ mensaje: 'Error , conectese con el administrador' });
+    }
+})
+
+app.put('/api/libros/:id', (req = request , res = response) => {
+    try{        
+        
+        const id = req.params.id;
+        const { titulo , autor } = req.body;
+
+        const libroActualizar = listaLibros.find(libro => libro.isbn === id);
+        
+
+        if(libroActualizar){
+             libroActualizar.titulo = titulo;
+             libroActualizar.autor = autor;
+
+             res.status(200).json({ message : "Actualizado correctamente" });
+         }else{
+            res.status(404).json({ message : "No se encontro" });
          }
 
-         const uuid = require('uuid');
-         jugadorNuevo.id = uuid.v4();    
-         listaJugadores.push(jugadorNuevo);
-
-         return res.status(201).json(jugadorNuevo);
     }catch(err){
-        return res.status(500).json({message: "Error en el servidor, hable con el administrador"});
-    }finally{
-        console.log('Insercion finalizada');
+        return res.status(500).json({ mensaje: 'Error , conectese con el administrador' });
     }
-    
-});
+})
 
 
 app.listen(PORT, ()=> {

@@ -9,6 +9,10 @@ let listaLibros = [
         titulo: 'RESTful Web API Design with Node.js',
         autor:'Valentin Bojinov'
 
-}];
+    },{
+        isbn: '1',
+        titulo: 'harry potter y el caliz de fuego',
+        autor:'jk rowling'
+    }];
 
 module.exports = listaLibros;
